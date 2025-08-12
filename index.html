@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EVA Interactivo</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Bienvenido a mi EVA Interactivo</h1>
+        <nav>
+            <a href="#modulo1">Módulo 1</a>
+            <a href="#modulo2">Módulo 2</a>
+        </nav>
+    </header>
+
+    <main>
+        <section id="modulo1">
+            <h2>Módulo 1: Introducción</h2>
+            <p>Este es el primer módulo del EVA. Aquí puedes agregar texto, imágenes y recursos HTML.</p>
+            <button onclick="alert('¡Has interactuado con el módulo 1!')">Haz clic aquí</button>
+        </section>
+
+        <section id="modulo2">
+            <h2>Módulo 2: Actividad interactiva</h2>
+            <p>Responde la pregunta:</p>
+            <input type="text" id="respuesta" placeholder="Escribe tu respuesta">
+            <button onclick="verificar()">Enviar</button>
+            <p id="resultado"></p>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
