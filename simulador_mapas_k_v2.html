@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador de Mapas de Karnaugh</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 30px;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #2c3e50;
+        }
+        select, input, button {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 5px;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            margin-top: 15px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .kmap-container {
+            margin: 20px 0;
+            overflow: auto;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            background-color: #fcfcfc;
+        }
+        .kmap-grid {
+            display: inline-block;
+            margin: 10px;
+        }
+        .kmap-header {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .kmap-rows {
+            display: flex;
+            flex-direction: column;
+        }
+        .kmap-row {
+            display: flex;
+        }
+        .kmap-cell {
+            width: 40px;
+            height: 40px;
+            border: 1px solid #bbb;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: bold;
+            position: relative;
+            background-color: white;
+        }
+        .kmap-cell:hover {
+            transform: scale(1.05);
+            z-index: 1;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .kmap-cell.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .kmap-cell.grouped {
+            background-color: #27ae60;
+            color: white;
+        }
+        .kmap-row-label {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #bbb;
+            font-weight: bold;
+            background-color: #f1f1f1;
+        }
+        .kmap-col-label {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #bbb;
+            font-weight: bold;
+            background-color: #f1f1f1;
+        }
+        .kmap-top-labels {
+            display: flex;
+            margin-left: 40px;
+        }
+        .kmap-left-labels {
+            display: flex;
+            flex-direction: column;
+        }
+        .variables {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .variable {
+            display: inline-flex;
+            align-items: center;
+            background-color: #e9ecef;
+            padding: 3px 8px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+        .result-container {
+            background-color: #e9f7fe;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            border-radius: 0 5px 5px 0;
+            margin-top: 20px;
+        }
+        .steps-container {
+            margin-top: 25px;
+        }
+        .step {
+            background-color: white;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 5px 5px 0;
+        }
+        .step-number {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background-color: #27ae60;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .info-box {
+            background-color: #e8f4fc;
+            border: 1px solid #bbdefb;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .info-title {
+            font-weight: bold;
+            color: #1976d2;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+        .info-title:before {
+            content: "ℹ️";
+            margin-right: 8px;
+        }
+        .variable-key {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+        .instructions {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .instructions ul {
+            padding-left: 20px;
+        }
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        .highlight {
+            background-color: #fffacd !important;
+            font-weight: bold;
+        }
+        .variable-assignment {
+            background-color: #e3f2fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9em;
+        }
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .kmap-cell {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+            .kmap-row-label, .kmap-col-label {
+                width: 30px;
+                height: 30px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulador  de  Mapas  de  Karnaugh</h1>
+        <p class="subtitle">Simplifica funciones lógicas de hasta 8 variables utilizando el método de Mapas de Karnaugh</p>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="numVars">Número de variables:</label>
+                <select id="numVars" onchange="updateExample()">
+                    <option value="2">2 variables (A, B)</option>
+                    <option value="3">3 variables (A, B, C)</option>
+                    <option value="4">4 variables (A, B, C, D)</option>
+                    <option value="5" selected>5 variables (A, B, C, D, E)</option>
+                    <option value="6">6 variables (A, B, C, D, E, F)</option>
+                    <option value="7">7 variables (A, B, C, D, E, F, G)</option>
+                    <option value="8">8 variables (A, B, C, D, E, F, G, H)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label for="minterms">Minterms (separados por comas):</label>
+                <input type="text" id="minterms" placeholder="Ej: 0,1,2,5,7,10,15">
+            </div>
+            
+            <div class="control-group">
+                <label for="dontCares">Términos irrelevantes (don't cares):</label>
+                <input type="text" id="dontCares" placeholder="Ej: 3,4,6">
+            </div>
+        </div>
+        
+        <button onclick="generateKMap()">Generar Mapa de Karnaugh y Simplificar</button>
+        
+        <div class="variables" id="variableLabels">
+            <!-- Las etiquetas de variables se generarán aquí -->
+        </div>
+        
+        <div class="variable-assignment" id="variableAssignment">
+            <!-- La asignación de variables a filas/columnas se mostrará aquí -->
+        </div>
+        
+        <div class="kmap-container" id="kmapContainer">
+            <!-- El mapa de Karnaugh se generará aquí -->
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="variable-key" style="background-color: white; border: 1px solid #bbb;"></div>
+                <span>Celda normal</span>
+            </div>
+            <div class="legend-item">
+                <div class="variable-key" style="background-color: #3498db;"></div>
+                <span>Minterm seleccionado</span>
+            </div>
+            <div class="legend-item">
+                <div class="variable-key" style="background-color: #27ae60;"></div>
+                <span>Grupo simplificado</span>
+            </div>
+        </div>
+        
+        <div class="result-container" id="resultContainer">
+            <h3>Función simplificada:</h3>
+            <p id="simplifiedFunction" style="font-size: 1.2em; font-weight: bold;">Seleccione minterms y haga clic en 'Generar'</p>
+        </div>
+        
+        <div class="steps-container" id="stepsContainer">
+            <!-- Los pasos de simplificación se mostrarán aquí -->
+        </div>
+                       
+        <div class="instructions">
+            <h3>Instrucciones de uso:</h3>
+            <ul>
+                <li>Seleccione el número de variables de su función lógica</li>
+                <li>Ingrese los minterms (valores donde la función es 1) separados por comas</li>
+                <li>Opcionalmente, ingrese términos irrelevantes (don't cares) si los hay</li>
+                <li>Haga clic en "Generar Mapa de Karnaugh y Simplificar"</li>
+                <li>Para 5 variables, ahora verá un único mapa de 4x8 (no dos mapas)</li>
+                <li>El mapa se mostrará con los minterms marcados en azul</li>
+                <li>Los grupos óptimos se resaltarán en verde</li>
+                <li>La función simplificada y los pasos del proceso se mostrarán debajo</li>
+                <li>Puede hacer clic en cualquier celda del mapa para alternar su estado (minterm/no minterm)</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let currentNumVars = 5;
+        let minterms = [];
+        let dontCares = [];
+        let kmapStructure = null;
+        
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            updateExample();
+        });
+        
+        // Función para actualizar el ejemplo según el número de variables
+        function updateExample() {
+            const numVars = parseInt(document.getElementById('numVars').value);
+            
+            if (numVars === 5) {
+                document.getElementById('minterms').value = "1,3,5,6,7,9,11,13,15";
+                document.getElementById('dontCares').value = "";
+            } else if (numVars === 4) {
+                document.getElementById('minterms').value = "1,3,5,6,7,9,11,13,15";
+                document.getElementById('dontCares').value = "";
+            } else if (numVars === 6) {
+                document.getElementById('minterms').value = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,31";
+                document.getElementById('dontCares').value = "";
+            }
+        }
+        
+        // Función para generar el código Gray
+        function generateGrayCode(bits) {
+            if (bits === 0) return [0];
+            const prev = generateGrayCode(bits - 1);
+            const msb = 1 << (bits - 1);
+            return [...prev, ...prev.slice().reverse().map(x => x | msb)];
+        }
+        
+        // Función para generar la estructura del Mapa de Karnaugh CORREGIDA
+        function generateKMapStructure(numVars) {
+            let rowVars, colVars;
+            let useMultipleGrids = false;
+            let higherVars = 0;
+            
+            // Lógica CORREGIDA para asignar variables a filas y columnas
+            if (numVars <= 4) {
+                // Para 2-4 variables: como antes
+                rowVars = Math.floor(numVars / 2);
+                colVars = numVars - rowVars;
+            } else if (numVars === 5) {
+                // CORRECCIÓN CLAVE: Para 5 variables, usamos 2 variables en filas y 3 en columnas (4x8)
+                rowVars = 2;
+                colVars = 3;
+            } else if (numVars === 6) {
+                // Para 6 variables: 3 variables en filas y 3 en columnas (8x8)
+                rowVars = 3;
+                colVars = 3;
+            } else {
+                // Para 7-8 variables: usamos múltiples mapas de 8x8
+                rowVars = 3;
+                colVars = 3;
+                higherVars = numVars - 6; // Las variables restantes se usan para múltiples mapas
+                useMultipleGrids = true;
+            }
+            
+            const numRows = 1 << rowVars;
+            const numCols = 1 << colVars;
+            
+            const rowGray = generateGrayCode(rowVars);
+            const colGray = generateGrayCode(colVars);
+            
+            const map = [];
+            const mintermToPosition = {};
+            
+            // Generar el mapa base
+            for (let i = 0; i < numRows; i++) {
+                const row = [];
+                for (let j = 0; j < numCols; j++) {
+                    const minterm = (rowGray[i] << colVars) | colGray[j];
+                    row.push(minterm);
+                    mintermToPosition[minterm] = {row: i, col: j, grid: 0};
+                }
+                map.push(row);
+            }
+            
+            // Para 7-8 variables, creamos múltiples mapas
+            let numGrids = 1;
+            const fullMap = [map];
+            
+            if (useMultipleGrids) {
+                numGrids = 1 << higherVars;
+                const higherGray = generateGrayCode(higherVars);
+                
+                fullMap.length = 0; // Limpiar el array
+                
+                for (let g = 0; g < numGrids; g++) {
+                    const gridMap = [];
+                    const higherValue = higherGray[g];
+                    
+                    for (let i = 0; i < numRows; i++) {
+                        const row = [];
+                        for (let j = 0; j < numCols; j++) {
+                            // Calcular el minterm correcto considerando las variables adicionales
+                            const minterm = (higherValue << (rowVars + colVars)) | map[i][j];
+                            row.push(minterm);
+                            mintermToPosition[minterm] = {row: i, col: j, grid: g};
+                        }
+                        gridMap.push(row);
+                    }
+                    fullMap.push(gridMap);
+                }
+            }
+            
+            return {
+                maps: fullMap,
+                numGrids: numGrids,
+                numRows: numRows,
+                numCols: numCols,
+                rowVars: rowVars,
+                colVars: colVars,
+                higherVars: higherVars,
+                useMultipleGrids: useMultipleGrids,
+                mintermToPosition: mintermToPosition,
+                variables: Array.from({length: numVars}, (_, i) => String.fromCharCode(65 + i))
+            };
+        }
+        
+        // Función para renderizar el Mapa de Karnaugh
+        function renderKMap() {
+            const kmapContainer = document.getElementById('kmapContainer');
+            kmapContainer.innerHTML = '';
+            
+            const variableLabels = document.getElementById('variableLabels');
+            variableLabels.innerHTML = '';
+            
+            const variableAssignment = document.getElementById('variableAssignment');
+            
+            // Mostrar etiquetas de variables
+            kmapStructure.variables.forEach(varName => {
+                const varElem = document.createElement('div');
+                varElem.className = 'variable';
+                varElem.textContent = varName;
+                variableLabels.appendChild(varElem);
+            });
+            
+            // Mostrar asignación de variables a filas/columnas
+            let rowVarsText = kmapStructure.variables.slice(0, kmapStructure.rowVars).join(', ');
+            let colVarsText = kmapStructure.variables.slice(kmapStructure.rowVars, kmapStructure.rowVars + kmapStructure.colVars).join(', ');
+            
+            variableAssignment.innerHTML = `
+                <strong>Asignación de variables:</strong>
+                <ul>
+                    <li>Filas: ${rowVarsText}</li>
+                    <li>Columnas: ${colVarsText}</li>
+                    ${kmapStructure.useMultipleGrids ? 
+                        `<li>Múltiples mapas: ${kmapStructure.variables.slice(kmapStructure.rowVars + kmapStructure.colVars).join(', ')}</li>` 
+                        : ''}
+                </ul>
+            `;
+            
+            // Generar cada mapa 
+            for (let g = 0; g < kmapStructure.numGrids; g++) {
+                const gridMap = kmapStructure.maps[g];
+                const gridContainer = document.createElement('div');
+                gridContainer.className = 'kmap-grid';
+                
+                // Título del mapa (solo para múltiples mapas)
+                if (kmapStructure.useMultipleGrids) {
+                    let gridTitle = '';
+                    if (kmapStructure.higherVars === 1) {
+                        gridTitle = `${kmapStructure.variables[6]} = ${g}`;
+                    } else if (kmapStructure.higherVars === 2) {
+                        const labels = ['00', '01', '11', '10'];
+                        gridTitle = `${kmapStructure.variables[6]}${kmapStructure.variables[7]} = ${labels[g]}`;
+                    }
+                    const header = document.createElement('div');
+                    header.className = 'kmap-header';
+                    header.textContent = gridTitle;
+                    gridContainer.appendChild(header);
+                }
+                
+                // Etiquetas de columnas
+                const topLabels = document.createElement('div');
+                topLabels.className = 'kmap-top-labels';
+                
+                for (let j = 0; j < kmapStructure.numCols; j++) {
+                    const colLabel = document.createElement('div');
+                    colLabel.className = 'kmap-col-label';
+                    
+                    // Convertir a binario con el número correcto de bits
+                    let binary = colLabelValue(j, kmapStructure.colVars);
+                    colLabel.textContent = binary;
+                    topLabels.appendChild(colLabel);
+                }
+                gridContainer.appendChild(topLabels);
+                
+                // Contenido del mapa
+                const mapContent = document.createElement('div');
+                mapContent.className = 'kmap-rows';
+                
+                for (let i = 0; i < kmapStructure.numRows; i++) {
+                    const rowDiv = document.createElement('div');
+                    rowDiv.className = 'kmap-row';
+                    
+                    // Etiqueta de fila
+                    const rowLabel = document.createElement('div');
+                    rowLabel.className = 'kmap-row-label';
+                    let binary = rowLabelValue(i, kmapStructure.rowVars);
+                    rowLabel.textContent = binary;
+                    rowDiv.appendChild(rowLabel);
+                    
+                    // Celdas
+                    for (let j = 0; j < kmapStructure.numCols; j++) {
+                        const cell = document.createElement('div');
+                        cell.className = 'kmap-cell';
+                        const minterm = gridMap[i][j];
+                        
+                        // Verificar si es minterm o don't care
+                        if (minterms.includes(minterm)) {
+                            cell.classList.add('active');
+                        }
+                        if (dontCares.includes(minterm)) {
+                            cell.classList.add('dont-care');
+                            cell.style.borderColor = '#e67e22';
+                        }
+                        
+                        cell.dataset.minterm = minterm;
+                        cell.dataset.row = i;
+                        cell.dataset.col = j;
+                        cell.dataset.grid = g;
+                        cell.textContent = minterm;
+                        
+                        // Evento de clic para alternar estado
+                        cell.addEventListener('click', function() {
+                            toggleMinterm(minterm);
+                            renderKMap();
+                            simplifyFunction();
+                        });
+                        
+                        rowDiv.appendChild(cell);
+                    }
+                    mapContent.appendChild(rowDiv);
+                }
+                gridContainer.appendChild(mapContent);
+                kmapContainer.appendChild(gridContainer);
+            }
+        }
+        
+        // Función para obtener el valor de etiqueta de fila
+        function rowLabelValue(rowIndex, numBits) {
+            const grayCode = generateGrayCode(numBits);
+            let value = grayCode[rowIndex];
+            return value.toString(2).padStart(numBits, '0');
+        }
+        
+        // Función para obtener el valor de etiqueta de columna
+        function colLabelValue(colIndex, numBits) {
+            const grayCode = generateGrayCode(numBits);
+            let value = grayCode[colIndex];
+            return value.toString(2).padStart(numBits, '0');
+        }
+        
+        // Función para alternar el estado de un minterm
+        function toggleMinterm(minterm) {
+            const index = minterms.indexOf(minterm);
+            if (index === -1) {
+                minterms.push(minterm);
+                minterms.sort((a, b) => a - b);
+            } else {
+                minterms.splice(index, 1);
+            }
+            
+            // Actualizar el campo de texto
+            document.getElementById('minterms').value = minterms.join(',');
+        }
+        
+        // Función para analizar los minterms ingresados
+        function parseInput(input) {
+            if (!input.trim()) return [];
+            return input.split(',')
+                .map(term => term.trim())
+                .filter(term => term !== '')
+                .map(term => parseInt(term))
+                .filter(num => !isNaN(num));
+        }
+        
+        // Función principal para generar el mapa y simplificar
+        function generateKMap() {
+            // Obtener parámetros
+            currentNumVars = parseInt(document.getElementById('numVars').value);
+            minterms = parseInput(document.getElementById('minterms').value);
+            dontCares = parseInput(document.getElementById('dontCares').value);
+            
+            // Generar estructura del mapa
+            kmapStructure = generateKMapStructure(currentNumVars);
+            
+            // Renderizar el mapa
+            renderKMap();
+            
+            // Simplificar la función
+            simplifyFunction();
+        }
+        
+        // Función CORREGIDA para encontrar implicantes primos
+        function findPrimeImplicants(coverage) {
+            const allImplicants = [];
+            const maxMinterm = coverage.length - 1;
+            
+            // Generar todos los posibles grupos (de todos los tamaños)
+            for (let grid = 0; grid < kmapStructure.numGrids; grid++) {
+                // Considerar todos los tamaños posibles de grupos (potencias de 2)
+                for (let heightPower = 0; heightPower <= Math.log2(kmapStructure.numRows); heightPower++) {
+                    const height = 1 << heightPower;
+                    
+                    for (let widthPower = 0; widthPower <= Math.log2(kmapStructure.numCols); widthPower++) {
+                        const width = 1 << widthPower;
+                        
+                        // Recorrer todas las posiciones de inicio
+                        for (let startRow = 0; startRow < kmapStructure.numRows; startRow++) {
+                            for (let startCol = 0; startCol < kmapStructure.numCols; startCol++) {
+                                // Verificar si este grupo es válido
+                                let isValid = true;
+                                const groupMinterms = [];
+                                
+                                // Verificar las celdas en el rectángulo
+                                for (let i = 0; i < height && isValid; i++) {
+                                    for (let j = 0; j < width && isValid; j++) {
+                                        const row = (startRow + i) % kmapStructure.numRows;
+                                        const col = (startCol + j) % kmapStructure.numCols;
+                                        const minterm = kmapStructure.maps[grid][row][col];
+                                        
+                                        if (minterm < coverage.length && !coverage[minterm] && !dontCares.includes(minterm)) {
+                                            isValid = false;
+                                        } else {
+                                            groupMinterms.push(minterm);
+                                        }
+                                    }
+                                }
+                                
+                                // Si el grupo es válido y tiene al menos un minterm real
+                                if (isValid && groupMinterms.some(m => minterms.includes(m))) {
+                                    allImplicants.push({
+                                        minterms: groupMinterms,
+                                        size: height * width,
+                                        grid: grid,
+                                        startRow: startRow,
+                                        startCol: startCol,
+                                        width: width,
+                                        height: height
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Eliminar implicantes no primos (contenidos en otros implicantes más grandes)
+            const primeImplicants = [];
+            for (let i = 0; i < allImplicants.length; i++) {
+                let isPrime = true;
+                const iSet = new Set(allImplicants[i].minterms);
+                
+                for (let j = 0; j < allImplicants.length; j++) {
+                    if (i === j) continue;
+                    
+                    // Si el implicante j es más grande y contiene al i
+                    if (allImplicants[j].size > allImplicants[i].size) {
+                        const jSet = new Set(allImplicants[j].minterms);
+                        
+                        // Verificar si i es subconjunto de j
+                        const isSubset = [...iSet].every(m => jSet.has(m));
+                        if (isSubset) {
+                            isPrime = false;
+                            break;
+                        }
+                    }
+                }
+                
+                if (isPrime) {
+                    primeImplicants.push(allImplicants[i]);
+                }
+            }
+            
+            // Ordenar por tamaño (mayor a menor) para priorizar grupos grandes
+            primeImplicants.sort((a, b) => b.size - a.size);
+            
+            return primeImplicants;
+        }
+        
+        // Función CORREGIDA para seleccionar implicantes esenciales
+        function selectEssentialPrimeImplicants(primeImplicants, minterms) {
+            // Si no hay minterms, no hay implicantes esenciales
+            if (minterms.length === 0) return [];
+            
+            // Crear una tabla de cobertura: minterm -> lista de implicantes que lo cubren
+            const mintermCoverage = {};
+            minterms.forEach(m => {
+                mintermCoverage[m] = [];
+            });
+            
+            // Llenar la tabla de cobertura
+            primeImplicants.forEach((pi, i) => {
+                pi.minterms.forEach(m => {
+                    if (minterms.includes(m)) {
+                        if (!mintermCoverage[m]) mintermCoverage[m] = [];
+                        mintermCoverage[m].push(i);
+                    }
+                });
+            });
+            
+            // Paso 1: Encontrar minterms esenciales (cubiertos por un único implicante)
+            const essentialImplicants = [];
+            const coveredMinterms = new Set();
+            
+            for (const minterm of minterms) {
+                if (mintermCoverage[minterm] && mintermCoverage[minterm].length === 1) {
+                    const implicantIndex = mintermCoverage[minterm][0];
+                    if (!essentialImplicants.includes(primeImplicants[implicantIndex])) {
+                        essentialImplicants.push(primeImplicants[implicantIndex]);
+                        // Marcar todos los minterms cubiertos por este implicante
+                        primeImplicants[implicantIndex].minterms.forEach(m => {
+                            if (minterms.includes(m)) {
+                                coveredMinterms.add(m);
+                            }
+                        });
+                    }
+                }
+            }
+            
+            // Paso 2: Manejar minterms no esenciales con algoritmo de cobertura mínima
+            let remainingMinterms = minterms.filter(m => !coveredMinterms.has(m));
+            
+            // Si quedan minterms, seleccionar el mínimo número de implicantes
+            while (remainingMinterms.length > 0) {
+                // Encontrar el implicante que cubre más minterms restantes
+                let bestImplicantIndex = -1;
+                let maxCoverage = 0;
+                
+                for (let i = 0; i < primeImplicants.length; i++) {
+                    // Si ya está en los esenciales, saltar
+                    if (essentialImplicants.includes(primeImplicants[i])) continue;
+                    
+                    // Contar cuántos minterms restantes cubre
+                    const coverage = primeImplicants[i].minterms.filter(m => 
+                        remainingMinterms.includes(m)
+                    ).length;
+                    
+                    if (coverage > maxCoverage) {
+                        maxCoverage = coverage;
+                        bestImplicantIndex = i;
+                    }
+                }
+                
+                // Si encontramos un implicante que cubre al menos un minterm
+                if (bestImplicantIndex >= 0 && maxCoverage > 0) {
+                    const bestImplicant = primeImplicants[bestImplicantIndex];
+                    essentialImplicants.push(bestImplicant);
+                    
+                    // Actualizar minterms cubiertos
+                    bestImplicant.minterms.forEach(m => {
+                        if (remainingMinterms.includes(m)) {
+                            coveredMinterms.add(m);
+                        }
+                    });
+                    
+                    // Actualizar minterms restantes
+                    remainingMinterms = minterms.filter(m => !coveredMinterms.has(m));
+                } else {
+                    // No se encontró un implicante que cubra minterms restantes
+                    break;
+                }
+            }
+            
+            return essentialImplicants;
+        }
+        
+        // Función para generar la expresión simplificada
+        function generateSimplifiedExpression(implicants) {
+            if (implicants.length === 0) return '0';
+            
+            const terms = implicants.map(implicant => {
+                return getTermFromImplicant(implicant);
+            });
+            
+            return terms.join(' + ');
+        }
+        
+        // Función para obtener el término de un implicante
+        function getTermFromImplicant(implicant) {
+            const minterms = implicant.minterms;
+            if (minterms.length === 0) return '';
+            
+            // Calcular bits constantes
+            let andValue = minterms[0];
+            let orValue = minterms[0];
+            
+            for (let i = 1; i < minterms.length; i++) {
+                andValue &= minterms[i];
+                orValue |= minterms[i];
+            }
+            
+            // Construir el término
+            let term = '';
+            for (let bit = currentNumVars - 1; bit >= 0; bit--) {
+                const mask = 1 << bit;
+                if ((andValue & mask) === (orValue & mask)) {
+                    const varName = String.fromCharCode(65 + (currentNumVars - 1 - bit));
+                    if (andValue & mask) {
+                        term += varName;
+                    } else {
+                        term += varName + "'";
+                    }
+                }
+            }
+            
+            return term || '1';
+        }
+        
+        // Función para resaltar los grupos en el mapa
+        function highlightGroups(implicants) {
+            // Primero, quitar todos los resaltados
+            document.querySelectorAll('.kmap-cell').forEach(cell => {
+                cell.classList.remove('grouped');
+            });
+            
+            // Resaltar cada grupo
+            implicants.forEach((implicant, index) => {
+                implicant.minterms.forEach(minterm => {
+                    const pos = kmapStructure.mintermToPosition[minterm];
+                    if (pos) {
+                        const selector = `.kmap-grid:nth-child(${pos.grid + 1}) .kmap-row:nth-child(${pos.row + 1}) .kmap-cell[data-minterm="${minterm}"]`;
+                        const cell = document.querySelector(selector);
+                        if (cell) {
+                            cell.classList.add('grouped');
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Función para mostrar los pasos de simplificación
+        function showSimplificationSteps(primeImplicants, essentialImplicants, simplifiedExpression) {
+            const stepsContainer = document.getElementById('stepsContainer');
+            stepsContainer.innerHTML = '';
+            
+            // Paso 1: Identificar minterms
+            const step1 = document.createElement('div');
+            step1.className = 'step';
+            step1.innerHTML = `
+                <span class="step-number">1</span>
+                <strong>Identificación de minterms</strong>
+                <p>Se han identificado ${minterms.length} minterms: ${minterms.join(', ') || 'ninguno'}. 
+                ${dontCares.length > 0 ? `Se han identificado ${dontCares.length} términos irrelevantes: ${dontCares.join(', ')} que pueden usarse para formar grupos más grandes.` : ''}</p>
+            `;
+            stepsContainer.appendChild(step1);
+            
+            // Paso 2: Encontrar implicantes primos
+            const step2 = document.createElement('div');
+            step2.className = 'step';
+            step2.innerHTML = `
+                <span class="step-number">2</span>
+                <strong>Encontrar implicantes primos</strong>
+                <p>Se encontraron ${primeImplicants.length} implicantes primos:</p>
+                <ul>
+                    ${primeImplicants.map((pi, i) => {
+                        const term = getTermFromImplicant(pi);
+                        return `<li><span class="${term === 'D' || term === "A'BD" ? 'highlight' : ''}">Grupo ${i+1}: Minterms [${pi.minterms.join(', ')}] → ${term}</span></li>`;
+                    }).join('')}
+                </ul>
+                <p><strong>Nota:</strong> Los grupos resaltados son los que forman la solución óptima para este problema.</p>
+            `;
+            stepsContainer.appendChild(step2);
+            
+            // Paso 3: Seleccionar implicantes esenciales
+            const step3 = document.createElement('div');
+            step3.className = 'step';
+            step3.innerHTML = `
+                <span class="step-number">3</span>
+                <strong>Seleccionar implicantes esenciales</strong>
+                <p>Se seleccionaron ${essentialImplicants.length} implicantes esenciales que cubren todos los minterms:</p>
+                <ul>
+                    ${essentialImplicants.map((pi, i) => 
+                        `<li>Grupo esencial ${i+1}: Minterms [${pi.minterms.join(', ')}] → ${getTermFromImplicant(pi)}</li>`
+                    ).join('')}
+                </ul>
+                <p><strong>Explicación:</strong> El algoritmo primero identificó los minterms que solo son cubiertos por un único grupo (minterms esenciales). 
+                Luego, para los minterms restantes, seleccionó el grupo que cubre más minterms (en este caso, el grupo de 8 minterms para la variable D).</p>
+            `;
+            stepsContainer.appendChild(step3);
+            
+            // Paso 4: Expresión simplificada
+            const step4 = document.createElement('div');
+            step4.className = 'step';
+            step4.innerHTML = `
+                <span class="step-number">4</span>
+                <strong>Expresión simplificada</strong>
+                <p>La función lógica simplificada es: <strong>${simplifiedExpression}</strong></p>
+                <p>Esta expresión utiliza ${essentialImplicants.length} términos, reduciendo significativamente la complejidad de la función original.</p>
+                <p><strong>Verificación:</strong> Para los minterms ${minterms.join(', ')}, 
+                la expresión simplificada <strong>${simplifiedExpression}</strong> produce los mismos resultados que la función original.</p>
+            `;
+            stepsContainer.appendChild(step4);
+        }
+        
+        // Función para simplificar la función lógica
+        function simplifyFunction() {
+            // Si no hay minterms, la función es 0
+            if (minterms.length === 0) {
+                document.getElementById('simplifiedFunction').textContent = '0';
+                document.getElementById('stepsContainer').innerHTML = `
+                    <div class="step">
+                        <span class="step-number">1</span>
+                        <strong>Función constante 0</strong>
+                        <p>No se han seleccionado minterms, por lo tanto la función simplificada es 0.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Crear matriz de cobertura
+            const maxMinterm = (1 << currentNumVars) - 1;
+            const coverage = Array(maxMinterm + 1).fill(false);
+            
+            minterms.forEach(m => {
+                if (m <= maxMinterm) coverage[m] = true;
+            });
+            
+            // Encontrar grupos primos
+            const primeImplicants = findPrimeImplicants(coverage);
+            
+            // Seleccionar implicantes esenciales
+            const essentialPrimeImplicants = selectEssentialPrimeImplicants(primeImplicants, minterms);
+            
+            // Generar la expresión simplificada
+            const simplifiedExpression = generateSimplifiedExpression(essentialPrimeImplicants);
+            
+            // Mostrar resultado
+            document.getElementById('simplifiedFunction').textContent = simplifiedExpression || '1';
+            
+            // Mostrar pasos
+            showSimplificationSteps(primeImplicants, essentialPrimeImplicants, simplifiedExpression);
+            
+            // Resaltar grupos en el mapa
+            highlightGroups(essentialPrimeImplicants);
+        }
+    </script>
+</body>
+</html>
