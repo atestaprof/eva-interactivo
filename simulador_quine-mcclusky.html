@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador Quine-McCluskey</title>
+    <style>
+        /* Estilos Generales */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            width: 95%;
+            max-width: 1400px;
+        }
+        
+        /* Encabezado y Controles */
+        h1, h2 {
+            color: #1e3a8a; /* Azul oscuro */
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
+            margin-top: 2rem;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            align-items: end;
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            background-color: #f8fafc;
+            border-radius: 8px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .input-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #475569;
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 0.75rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        input[type="number"]:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        #startBtn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(45deg, #3b82f6, #2563eb);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+            align-self: stretch;
+        }
+
+        #startBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+        
+        /* Contenedores de la Simulación */
+        .step-container-wrapper {
+            overflow-x: auto;
+            padding-bottom: 1rem;
+        }
+
+        .step-container {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            min-width: max-content;
+        }
+
+        .comparison-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            background-color: #f1f5f9;
+            border-radius: 8px;
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .group {
+            padding-top: 1rem;
+            border-top: 3px solid #60a5fa;
+        }
+
+        .group-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: #1e3a8a;
+        }
+        
+        /* Estilos de los Términos */
+        .term {
+            background: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            opacity: 0;
+            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            min-width: 200px;
+        }
+        
+        .term .minterms {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .term .binary {
+            color: #64748b;
+        }
+
+        .term.used {
+            animation: markUsed 0.7s forwards;
+        }
+        
+        /* Tabla de Implicantes */
+        .table-container {
+             width: 100%;
+             overflow-x: auto;
+        }
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+            animation: fadeIn 0.5s;
+        }
+
+        .table-container th, .table-container td {
+            border: 1px solid #e2e8f0;
+            padding: 0.75rem;
+            text-align: center;
+        }
+
+        .table-container th {
+            background-color: #f1f5f9;
+        }
+        
+        .table-container .pi-col {
+            font-weight: bold;
+            font-family: 'Fira Code', 'Courier New', monospace;
+        }
+        
+        .essential-mark {
+            color: #ef4444; /* Rojo */
+            font-weight: bold;
+            animation: popIn 0.5s forwards;
+        }
+        
+        /* Resultado Final */
+        #step4-result {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #dbeafe;
+            border-left: 5px solid #3b82f6;
+            font-size: 1.3em;
+            font-weight: 500;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            animation: fadeIn 0.5s;
+            color: #1e3a8a;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Animaciones */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes markUsed {
+            0% { background-color: #fff; }
+            50% { background-color: #fee2e2; } /* Rojo claro */
+            100% {
+                background-color: #f1f5f9;
+                text-decoration: line-through;
+                color: #94a3b8;
+                opacity: 0.7;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simulador Visual Quine-McCluskey</h1>
+        
+        <div class="controls">
+            <div class="input-group">
+                <label for="variables">Número de Variables (2-6):</label>
+                <input type="number" id="variables" min="2" max="6" value="4">
+            </div>
+            <div class="input-group">
+                <label for="minterms">Minitérminos (Σm):</label>
+                <input type="text" id="minterms" placeholder="Ej: 1,4,6,7,8,9,10,15">
+            </div>
+            <div class="input-group">
+                <label for="dontCares">Términos "No Importa" (d):</label>
+                <input type="text" id="dontCares" placeholder="Ej: 0,2,5">
+            </div>
+            <button id="startBtn">Iniciar Simulación</button>
+        </div>
+        
+        <div id="simulation-container">
+            <section id="step1">
+                <h2>Paso 1: Agrupación por número de '1's</h2>
+                <div class="step-container-wrapper">
+                    <div id="step1-grouping" class="step-container"></div>
+                </div>
+            </section>
+            
+            <section id="step2">
+                <h2>Paso 2: Comparaciones y Reducción</h2>
+                <div class="step-container-wrapper">
+                    <div id="step2-comparisons" class="step-container"></div>
+                </div>
+            </section>
+            
+            <section id="step3">
+                <h2>Paso 3: Tabla de Implicantes Primos</h2>
+                <div id="step3-chart" class="table-container"></div>
+            </section>
+            
+            <section id="step4">
+                <h2>Paso 4: Función Minimizada</h2>
+                <div id="step4-result" class="result-box"></div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('startBtn').addEventListener('click', startSimulation);
+
+        // Función para añadir retrasos y hacer la animación visible
+        const sleep = (ms) => new Promise(res => setTimeout(res, ms));
+
+        async function startSimulation() {
+            // Limpiar simulaciones previas
+            document.getElementById('step1-grouping').innerHTML = '';
+            document.getElementById('step2-comparisons').innerHTML = '';
+            document.getElementById('step3-chart').innerHTML = '';
+            document.getElementById('step4-result').innerHTML = 'Calculando...';
+
+            // 1. Obtener y validar datos de entrada
+            const numVars = parseInt(document.getElementById('variables').value);
+            const mintermsInput = document.getElementById('minterms').value.trim();
+            const dontCaresInput = document.getElementById('dontCares').value.trim();
+            
+            if (!mintermsInput) {
+                document.getElementById('step4-result').innerHTML = 'Por favor, ingresa los minitériminos.';
+                return;
+            }
+            
+            const minterms = [...new Set(mintermsInput.split(',').map(m => parseInt(m.trim())))].sort((a,b) => a-b);
+            const dontCares = dontCaresInput ? [...new Set(dontCaresInput.split(',').map(m => parseInt(m.trim())))].sort((a,b) => a-b) : [];
+
+            const maxMinterm = Math.pow(2, numVars) - 1;
+            const allTermsForValidation = [...minterms, ...dontCares];
+            if (allTermsForValidation.some(m => isNaN(m) || m < 0 || m > maxMinterm)) {
+                document.getElementById('step4-result').innerHTML = `Error: Todos los términos deben ser números válidos entre 0 y ${maxMinterm}.`;
+                return;
+            }
+            
+            const overlap = minterms.filter(m => dontCares.includes(m));
+            if (overlap.length > 0) {
+                 document.getElementById('step4-result').innerHTML = `Error: Los términos ${overlap.join(',')} no pueden ser minitériminos y "no importa" a la vez.`;
+                return;
+            }
+
+            // Combinar minitériminos y "no importa" para la simplificación
+            const allTerms = [...new Set([...minterms, ...dontCares])].sort((a,b) => a-b);
+
+            // Inicia el algoritmo
+            await runQuineMcCluskey(minterms, allTerms, numVars);
+        }
+        
+        // Función para convertir binario a variables (A, B, C...)
+        function binaryToVar(binaryStr) {
+            const vars = ['A', 'B', 'C', 'D', 'E', 'F'];
+            let result = '';
+            for (let i = 0; i < binaryStr.length; i++) {
+                if (binaryStr[i] === '1') {
+                    result += vars[i];
+                } else if (binaryStr[i] === '0') {
+                    result += vars[i] + "'";
+                }
+            }
+            return result || '1'; // Si el resultado es vacío, es la función constante 1
+        }
+
+        // Función para crear elementos del DOM para un término
+        function createTermElement(term) {
+            const div = document.createElement('div');
+            div.className = 'term';
+            div.innerHTML = `<span class="minterms">m(${term.minterms.join(',')})</span><span class="binary">${term.binary}</span>`;
+            div.dataset.minterms = term.minterms.join(',');
+            div.dataset.binary = term.binary;
+            return div;
+        }
+        
+        // PASO 1: Agrupar por número de '1's
+        function groupByNumberOfOnes(terms, numVars) {
+            const groups = {};
+            for (const t of terms) {
+                const binary = t.toString(2).padStart(numVars, '0');
+                const numOnes = (binary.match(/1/g) || []).length;
+                if (!groups[numOnes]) {
+                    groups[numOnes] = [];
+                }
+                groups[numOnes].push({
+                    minterms: [t],
+                    binary: binary,
+                    isCombined: false,
+                    id: `term-${t}`
+                });
+            }
+            return Object.keys(groups).sort((a,b)=>a-b).map(key => groups[key]);
+        }
+
+        async function displayInitialGroups(groups) {
+            const container = document.getElementById('step1-grouping');
+            const column = document.createElement('div');
+            column.className = 'comparison-column';
+            column.id = 'column-0';
+            
+            for (let i = 0; i < groups.length; i++) {
+                const group = groups[i];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group';
+                const numOnes = (group[0].binary.match(/1/g) || []).length;
+                groupDiv.innerHTML = `<div class="group-title">Grupo con ${numOnes} uno(s)</div>`;
+                
+                for (const term of group) {
+                    const termEl = createTermElement(term);
+                    term.element = termEl;
+                    groupDiv.appendChild(termEl);
+                    await sleep(80);
+                }
+                column.appendChild(groupDiv);
+            }
+            container.appendChild(column);
+        }
+
+        // PASO 2: Comparaciones y Fusiones
+        function compareAndMerge(groups) {
+            const nextGroups = {};
+            let hasMerged = false;
+
+            for (let i = 0; i < groups.length - 1; i++) {
+                for (const term1 of groups[i]) {
+                    for (const term2 of groups[i + 1]) {
+                        let diff = 0;
+                        let diffIndex = -1;
+                        for (let k = 0; k < term1.binary.length; k++) {
+                            if (term1.binary[k] !== term2.binary[k]) {
+                                diff++;
+                                diffIndex = k;
+                            }
+                        }
+
+                        if (diff === 1) {
+                            hasMerged = true;
+                            term1.isCombined = true;
+                            term2.isCombined = true;
+                            
+                            const newBinary = term1.binary.substring(0, diffIndex) + '-' + term1.binary.substring(diffIndex + 1);
+                            const newMinterms = [...term1.minterms, ...term2.minterms].sort((a, b) => a - b);
+                            const newTerm = {
+                                minterms: newMinterms,
+                                binary: newBinary,
+                                isCombined: false
+                            };
+
+                            const numOnes = (newBinary.match(/1/g) || []).length;
+                            if (!nextGroups[numOnes]) nextGroups[numOnes] = [];
+                            
+                            if (!nextGroups[numOnes].some(t => t.binary === newTerm.binary)) {
+                                nextGroups[numOnes].push(newTerm);
+                            }
+                        }
+                    }
+                }
+            }
+            return { nextGroups: Object.keys(nextGroups).sort((a,b)=>a-b).map(key => nextGroups[key]), hasMerged };
+        }
+        
+        async function displayComparisonStep(groups, stepNum) {
+            const container = document.getElementById('step2-comparisons');
+            const column = document.createElement('div');
+            column.className = 'comparison-column';
+            column.id = `column-${stepNum}`;
+            
+            for (let i = 0; i < groups.length; i++) {
+                const group = groups[i];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'group';
+                const numOnes = (group.length > 0) ? (group[0].binary.match(/1/g) || []).length : 0;
+                groupDiv.innerHTML = `<div class="group-title">Grupo con ${numOnes} uno(s)</div>`;
+                
+                for (const term of group) {
+                    const termEl = createTermElement(term);
+                    term.element = termEl;
+                    groupDiv.appendChild(termEl);
+                    await sleep(80);
+                }
+                column.appendChild(groupDiv);
+            }
+            container.appendChild(column);
+        }
+
+        // PASO 3: Tabla de Implicantes Primos
+        async function solvePrimeImplicantChart(primeImplicants, originalMinterms, container) {
+            container.innerHTML = 'Construyendo tabla...';
+            await sleep(500);
+
+            let tableHTML = '<table><thead><tr><th class="pi-col">Implicante Primo</th>';
+            originalMinterms.forEach(m => tableHTML += `<th>${m}</th>`);
+            tableHTML += '</tr></thead><tbody>';
+
+            primeImplicants.forEach((p, i) => {
+                tableHTML += `<tr id="pi-row-${i}"><td class="pi-col">${binaryToVar(p.binary)} <sub>(${p.minterms.join(',')})</sub></td>`;
+                originalMinterms.forEach(m => {
+                    tableHTML += `<td>${p.minterms.includes(m) ? 'X' : ''}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+            await sleep(500);
+
+            let coveredMinterms = new Set();
+            let finalImplicants = [];
+
+            // Encontrar implicantes esenciales
+            for (const m of originalMinterms) {
+                let coveringImplicants = [];
+                primeImplicants.forEach((p, i) => {
+                    if (p.minterms.includes(m)) {
+                        coveringImplicants.push({implicant: p, index: i});
+                    }
+                });
+                if (coveringImplicants.length === 1) {
+                    const essential = coveringImplicants[0];
+                    if (!finalImplicants.includes(essential.implicant)) {
+                        finalImplicants.push(essential.implicant);
+                        document.getElementById(`pi-row-${essential.index}`).style.backgroundColor = '#dbeafe';
+                        document.getElementById(`pi-row-${essential.index}`).cells[0].innerHTML += ' <span class="essential-mark">*</span>';
+                    }
+                }
+            }
+            
+            finalImplicants.forEach(p => p.minterms.forEach(m => {
+                if (originalMinterms.includes(m)) coveredMinterms.add(m);
+            }));
+            
+            // Cubrir minitériminos restantes
+            let remainingMinterms = originalMinterms.filter(m => !coveredMinterms.has(m));
+            let nonEssentialImplicants = primeImplicants.filter(p => !finalImplicants.includes(p));
+
+            while (remainingMinterms.length > 0) {
+                nonEssentialImplicants.sort((a, b) => 
+                    b.minterms.filter(m => remainingMinterms.includes(m)).length - 
+                    a.minterms.filter(m => remainingMinterms.includes(m)).length
+                );
+                let bestImplicant = nonEssentialImplicants[0];
+                if (!bestImplicant || bestImplicant.minterms.filter(m => remainingMinterms.includes(m)).length === 0) break;
+
+                finalImplicants.push(bestImplicant);
+                const piIndex = primeImplicants.indexOf(bestImplicant);
+                document.getElementById(`pi-row-${piIndex}`).style.backgroundColor = '#e7e5e4';
+
+                bestImplicant.minterms.forEach(m => {
+                     if (originalMinterms.includes(m)) coveredMinterms.add(m)
+                });
+                remainingMinterms = originalMinterms.filter(m => !coveredMinterms.has(m));
+                nonEssentialImplicants = nonEssentialImplicants.filter(p => p !== bestImplicant);
+            }
+            
+            const finalExpression = finalImplicants.map(p => binaryToVar(p.binary)).join(' + ');
+            return { finalExpression };
+        }
+
+        // --- FUNCIÓN PRINCIPAL DEL ALGORITMO ---
+        async function runQuineMcCluskey(originalMinterms, allTerms, numVars) {
+            // Paso 1
+            let initialGroups = groupByNumberOfOnes(allTerms, numVars);
+            await displayInitialGroups(initialGroups);
+            
+            let allImplicantsFromAllSteps = [...initialGroups];
+            let currentGroups = initialGroups;
+            let step = 0;
+
+            // Paso 2
+            while (true) {
+                let { nextGroups, hasMerged } = compareAndMerge(currentGroups);
+                
+                if (hasMerged) {
+                    await displayComparisonStep(nextGroups, ++step);
+                }
+                
+                for (const group of currentGroups) {
+                    for (const term of group) {
+                        if (term.isCombined && term.element) {
+                             term.element.classList.add('used');
+                             await sleep(50);
+                        }
+                    }
+                }
+
+                if (!hasMerged) break;
+                
+                allImplicantsFromAllSteps = allImplicantsFromAllSteps.concat(nextGroups);
+                currentGroups = nextGroups;
+            }
+
+            const allPrimeImplicants = allImplicantsFromAllSteps.flat().filter(term => !term.isCombined);
+            
+            // Paso 3
+            const chartContainer = document.getElementById('step3-chart');
+            const { finalExpression } = await solvePrimeImplicantChart(allPrimeImplicants, originalMinterms, chartContainer);
+
+            // Paso 4
+            const resultBox = document.getElementById('step4-result');
+            resultBox.innerHTML = `F(${['A','B','C','D','E','F'].slice(0, numVars).join(',')}) = ${finalExpression}`;
+        }
+    </script>
+</body>
+</html>
+
